@@ -18,9 +18,13 @@ proj = simulinkproject(projectFolder);
 % Define the GitHub repository URL
 repoURL = 'https://github.com/Energy-Optimization-Lab/DC-Microgrid';
 
-% Download the ZIP file using PowerShell
+% Download the ZIP file using system commands (e.g., curl for macOS/Linux, PowerShell for Windows)
 zipFile = fullfile(projectFolder, 'repository.zip');
-system(sprintf('powershell -command "Invoke-WebRequest -Uri %s -OutFile %s"', [repoURL, '/archive/main.zip'], zipFile));
+if ispc
+    system(sprintf('powershell -command "Invoke-WebRequest -Uri %s -OutFile %s"', [repoURL, '/archive/main.zip'], zipFile));
+else
+    system(sprintf('curl -L %s -o %s', [repoURL, '/archive/main.zip'], zipFile));
+end
 
 % Extract the ZIP file
 unzip(zipFile, projectFolder);
