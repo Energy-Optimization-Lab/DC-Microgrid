@@ -1,3 +1,5 @@
+% Will setup the project for Windows or Unix based systems
+
 % Prompt the user to select a folder for the project
 projectFolder = uigetdir('', 'Select a folder for the project');
 
