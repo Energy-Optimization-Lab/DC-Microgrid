@@ -12,11 +12,16 @@ if ~exist(projectFolder, 'dir')
     mkdir(projectFolder);
 end
 
-% Create a new MATLAB project in the selected folder
-proj = simulinkproject(projectFolder);
+% Create or open the MATLAB project in the selected folder
+if ~exist(fullfile(projectFolder, 'project.prj'), 'file')
+    proj = matlab.project.createProject(projectFolder);
+else
+    proj = simulinkproject(projectFolder);
+end
 
 % Define the GitHub repository URL
-repoURL = 'https://github.com/Energy-Optimization-Lab/DC-Microgrid';
+repoURL = 'https://github.com/Energy-Optimization-Lab/DC-Microgrid/archive/main.zip';
+
 
 % Download the ZIP file using system commands (e.g., curl for macOS/Linux, PowerShell for Windows)
 zipFile = fullfile(projectFolder, 'repository.zip');
