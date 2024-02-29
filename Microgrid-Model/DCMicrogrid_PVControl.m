@@ -1,59 +1,64 @@
-% Define time array for three days (0 to 300 seconds, with 0.1-second intervals)
-time = 0:0.1:300;
+% Load the Excel file for temperature data
+temperatureData = readtable('testDataTempSolar.xlsx');
 
-% Convert time to hours (0 to 72 hours)
-time_hours = time / 3600;
+% Extract temperature data and assume hourly measurements
+temp = temperatureData.T2M; 
 
-% Define irradiance array for three days
-irradiance = zeros(size(time));
+% Smooth the temperature data using a moving average filter
+windowSize = 10; % Adjust the window size as needed
+smoothedTemp = movingAverage(temp, windowSize);
 
-% Day 1: Perfect condition
-for i = 1:length(time)
-    if time_hours(i) >= 6 && time_hours(i) < 18  % Daytime from 6 AM to 6 PM
-        if time_hours(i) <= 15  % Before 3 PM
-            % Adjusted slope for a lower rise to peak irradiance
-            irradiance(i) = 1000 * (1 - cos(pi * (time_hours(i) - 6) / 9)) / 2;
-        else  % After 3 PM
-            % Steeper drop-off after peak irradiance
-            irradiance(i) = 1000 * (1 + cos(pi * (time_hours(i) - 15) / 3)) / 2;
-        end
+% Initialize irradiance array
+irradiance = zeros(1, 72);
+
+% Day 1: Sunny
+for i = 1:24
+    irradiance(i) = simulateIrradiance(i, 1);
+end
+
+% Day 2: Randomly cloudy (up to 20% of the daytime)
+for i = 25:48
+    if rand() <= 0.2  % 20% chance for cloud coverage at any given hour
+        irradiance(i) = simulateIrradiance(i - 24, 2) * 0.3; % 70% reduction due to cloud coverage
+    else
+        irradiance(i) = simulateIrradiance(i - 24, 2);
     end
 end
 
-% Day 2: Random clouds for up to 20% of daytime
-day2_start = find(time_hours >= 24, 1);
-day2_end = find(time_hours < 48, 1, 'last');
-daytime_indices = find(time_hours >= 30 & time_hours < 42);  % Daytime from 6 AM to 6 PM
-cloudy_indices = randsample(daytime_indices, floor(length(daytime_indices) * 0.2));  % 20% cloudy
-
-for i = day2_start:day2_end
-    if ismember(i, cloudy_indices)
-        irradiance(i) = irradiance(i) * 0.5;  % Reduce irradiance by 50% for clouds
-    end
+% Day 3: Overcast and raining
+for i = 49:72
+    irradiance(i) = simulateIrradiance(i - 48, 3) * 0.1; % 90% reduction due to overcast and rain
 end
-
-% Day 3: Storming/overcast the entire day
-day3_start = find(time_hours >= 48, 1);
-day3_end = find(time_hours <= 72, 1, 'last');
-
-for i = day3_start:day3_end
-    if time_hours(i) >= 54 && time_hours(i) < 66  % Daytime from 6 AM to 6 PM
-        irradiance(i) = irradiance(i) * 0.2;  % Reduce irradiance by 80% for overcast
-    end
-end
-
-% Define temperature array for three days
-% Adjusting the phase to make the peak around the 150-second mark
-temperature = 14.4444 + (25.5556 - 14.4444) * sin(2 * pi * (time / 300) - (2 * pi * 90 / 300));
-
-% Create timeseries objects
-ts_irradiance = timeseries(irradiance, time);
-ts_temperature = timeseries(temperature, time);
 
 % Create a Simulink.SimulationData.Dataset object
-dataset = Simulink.SimulationData.Dataset();
-dataset = dataset.addElement(ts_irradiance, 'Irradiance');
-dataset = dataset.addElement(ts_temperature, 'Temperature');
+scenario = Simulink.SimulationData.Dataset;
 
-% Save the dataset to a .mat file
-save('pv_signals_3days.mat', 'dataset');
+% Add data for smoothed temperature and raw irradiance without time information
+scenario = scenario.addElement(timeseries(irradiance'), 'Irradiance');
+scenario = scenario.addElement(timeseries(smoothedTemp'), 'SmoothedTemperature');
+
+% Save the scenario to a .mat file
+save('pv_signals.mat', 'scenario');
+
+% Function for moving average
+function smoothedData = movingAverage(data, windowSize)
+    b = (1/windowSize)*ones(1, windowSize);
+    a = 1;
+    smoothedData = filter(b, a, data);
+end
+
+% Function for irradiance simulation
+function irrad = simulateIrradiance(hour, day)
+    if hour >= 6 && hour < 18
+        if day == 1  % Sunny day
+            irrad = 1000 * (1 - cos(pi * (hour - 6) / 6)) / 2;
+        elseif day == 2  % Randomly cloudy
+            irrad = 800 * (1 - cos(pi * (hour - 6) / 6)) / 2;  % Slightly lower peak
+        else  % Overcast and raining
+            irrad = 600 * (1 - cos(pi * (hour - 6) / 6)) / 2;  % Even lower peak
+        end
+    else
+        irrad = 0;
+    end
+end
+
