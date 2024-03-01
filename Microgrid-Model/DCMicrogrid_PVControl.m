@@ -5,7 +5,7 @@ temperatureData = readtable('testDataTempSolar.xlsx');
 temp = temperatureData.T2M; 
 
 % Smooth the temperature data using a moving average filter
-windowSize = 10; % Adjust the window size as needed
+windowSize = 5; % Adjust the window size as needed
 smoothedTemp = movingAverage(temp, windowSize);
 
 % Initialize irradiance array
