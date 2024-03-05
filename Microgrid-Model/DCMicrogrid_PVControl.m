@@ -4,30 +4,41 @@ temperatureData = readtable('testDataTempSolar.xlsx');
 % Extract temperature data and assume hourly measurements
 temp = temperatureData.T2M; 
 
-% Smooth the temperature data using a moving average filter
-windowSize = 5; % Adjust the window size as needed
-smoothedTemp = movingAverage(temp, windowSize);
+temp_expanded = zeros(1,720);
+
+for i = 1:length(temp)
+    for j = 1:10
+        temp_expanded((i-1)*10+j) = temp(i);
+    end
+end
+
+
+temp = temp_expanded;
+
+% % Smooth the temperature data using a moving average filter
+% windowSize = 5; % Adjust the window size as needed
+% smoothedTemp = movingAverage(temp, windowSize);
 
 % Initialize irradiance array
-irradiance = zeros(1, 72);
+irradiance = zeros(1, 720);
 
 % Day 1: Sunny
-for i = 1:24
+for i = 1:240
     irradiance(i) = simulateIrradiance(i, 1);
 end
 
 % Day 2: Randomly cloudy (up to 20% of the daytime)
-for i = 25:48
+for i = 241:480
     if rand() <= 0.2  % 20% chance for cloud coverage at any given hour
-        irradiance(i) = simulateIrradiance(i - 24, 2) * 0.3; % 70% reduction due to cloud coverage
+        irradiance(i) = simulateIrradiance(i - 240, 2) * 0.3; % 70% reduction due to cloud coverage
     else
-        irradiance(i) = simulateIrradiance(i - 24, 2);
+        irradiance(i) = simulateIrradiance(i - 240, 2);
     end
 end
 
 % Day 3: Overcast and raining
-for i = 49:72
-    irradiance(i) = simulateIrradiance(i - 48, 3) * 0.1; % 90% reduction due to overcast and rain
+for i = 481:720
+    irradiance(i) = simulateIrradiance(i - 480, 3) * 0.1; % 90% reduction due to overcast and rain
 end
 
 % Create a Simulink.SimulationData.Dataset object
@@ -35,20 +46,21 @@ scenario = Simulink.SimulationData.Dataset;
 
 % Add data for smoothed temperature and raw irradiance without time information
 scenario = scenario.addElement(timeseries(irradiance'), 'Irradiance');
-scenario = scenario.addElement(timeseries(smoothedTemp'), 'SmoothedTemperature');
+scenario = scenario.addElement(timeseries(temp'), 'Temperature');
 
 % Save the scenario to a .mat file
 save('pv_signals.mat', 'scenario');
 
-% Function for moving average
-function smoothedData = movingAverage(data, windowSize)
-    b = (1/windowSize)*ones(1, windowSize);
-    a = 1;
-    smoothedData = filter(b, a, data);
-end
+% % Function for moving average
+% function smoothedData = movingAverage(data, windowSize)
+%     b = (1/windowSize)*ones(1, windowSize);
+%     a = 1;
+%     smoothedData = filter(b, a, data);
+% end
 
 % Function for irradiance simulation
-function irrad = simulateIrradiance(hour, day)
+function irrad = simulateIrradiance(time, day)
+hour = time /10;
     if hour >= 6 && hour < 18
         if day == 1  % Sunny day
             irrad = 1000 * (1 - cos(pi * (hour - 6) / 6)) / 2;
@@ -61,4 +73,3 @@ function irrad = simulateIrradiance(hour, day)
         irrad = 0;
     end
 end
-

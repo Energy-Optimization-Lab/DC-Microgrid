@@ -2,23 +2,29 @@
 energy_data = readtable('hourly_energy_consumption.xlsx');
 hourly_energy_consumption = energy_data.HourlyEnergyConsumption_kWh;
 
-% Scale the data for 10 houses
-scaled_energy_consumption = hourly_energy_consumption * 10;
+temp_expanded = zeros(1, 720);  % Initialize the expanded array with zeros
 
-% Convert energy consumption (kWh) to power (kW) for each hour
-hourly_power = scaled_energy_consumption; % 1 kWh over 1 hour is 1 kW
+for i = 1:length(hourly_energy_consumption)
+    for j = 1:10
+        temp_expanded((i-1)*10 + j) = hourly_energy_consumption(i);
+    end
+end
+
+scaled_energy_consumption = temp_expanded * 10;
+
+powerWatts = scaled_energy_consumption * 1000 / 1;
 
 % Set the system voltage (e.g., for a 48V system)
-system_voltage = 48;
+system_voltage = 41;
 
 % Calculate the resistance required for each hour to consume the specified power
-resistance_values = (system_voltage^2) ./ hourly_power;
+resistance_values = (system_voltage^2) ./ powerWatts;
 
-% Create a time vector corresponding to each hour
-time_hours = (0:length(resistance_values)-1)';
+% Create a time vector corresponding to each data point
+time = (0:length(resistance_values)-1)';
 
 % Create a timeseries object for the resistance values
-resistance_ts = timeseries(resistance_values, time_hours);
+resistance_ts = timeseries(resistance_values, time);
 
 % Create a Simulink.SimulationData.Dataset object for the scenario
 scenario = Simulink.SimulationData.Dataset;
