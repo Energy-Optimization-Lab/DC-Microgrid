@@ -1,0 +1,34 @@
+% Load the hourly energy consumption data from the Excel file
+energy_data = readtable('hourly_energy_consumption.xlsx');
+hourly_energy_consumption = energy_data.HourlyEnergyConsumption_kWh;
+
+temp_expanded = zeros(1, 720);  % Initialize the expanded array with zeros
+
+for i = 1:72
+    for j = 1:10
+        index = (i-1)*10 + j;
+        if index > 720
+            break;
+        end
+        temp_expanded(index) = hourly_energy_consumption(i);
+    end
+end
+
+
+powerWatts = (temp_expanded * 10) * 1000 / 1;
+
+powerWatts_length = 720;  % Use a different variable name for length
+
+
+% Create a time vector corresponding to each data point
+time = (1:powerWatts_length)';  % Use the new variable name for length
+
+% Create a timeseries object for the resistance values
+power_ts = timeseries(powerWatts, time);
+
+% Create a Simulink.SimulationData.Dataset object for the scenario
+scenario = Simulink.SimulationData.Dataset;
+scenario = scenario.addElement(power_ts, 'PowerConsumption');
+
+% Save the scenario to a MAT file that can be loaded into the Signal Editor block
+save('load_signal.mat', 'scenario');
