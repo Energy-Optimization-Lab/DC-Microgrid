@@ -4,31 +4,31 @@ hourly_energy_consumption = energy_data.HourlyEnergyConsumption_kWh;
 
 temp_expanded = zeros(1, 720);  % Initialize the expanded array with zeros
 
-for i = 1:length(hourly_energy_consumption)
+for i = 1:72
     for j = 1:10
-        temp_expanded((i-1)*10 + j) = hourly_energy_consumption(i);
+        index = (i-1)*10 + j;
+        if index > 720
+            break;
+        end
+        temp_expanded(index) = hourly_energy_consumption(i);
     end
 end
 
-scaled_energy_consumption = temp_expanded * 10;
 
-powerWatts = scaled_energy_consumption * 1000 / 1;
+powerWatts = (temp_expanded * 10) * 1000 / 1;
 
-% Set the system voltage (e.g., for a 48V system)
-system_voltage = 41;
+powerWatts_length = 720;  % Use a different variable name for length
 
-% Calculate the resistance required for each hour to consume the specified power
-resistance_values = (system_voltage^2) ./ powerWatts;
 
 % Create a time vector corresponding to each data point
-time = (0:length(resistance_values)-1)';
+time = (1:powerWatts_length)';  % Use the new variable name for length
 
 % Create a timeseries object for the resistance values
-resistance_ts = timeseries(resistance_values, time);
+power_ts = timeseries(powerWatts, time);
 
 % Create a Simulink.SimulationData.Dataset object for the scenario
 scenario = Simulink.SimulationData.Dataset;
-scenario = scenario.addElement(resistance_ts, 'Resistance');
+scenario = scenario.addElement(power_ts, 'PowerConsumption');
 
 % Save the scenario to a MAT file that can be loaded into the Signal Editor block
 save('load_signal.mat', 'scenario');
