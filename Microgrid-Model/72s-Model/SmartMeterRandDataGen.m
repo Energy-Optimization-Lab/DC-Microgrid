@@ -1,3 +1,6 @@
+
+for i = 1:5
+    
 % Generate arrays of 10 random values
 BatterySoCRandom = randi([50,100], 10, 1);
 minBatteryPercentageRequiredRandom = randi([10,25], 10, 1);
@@ -17,6 +20,8 @@ Scenario = Scenario.addElement(BatterySoCTimeseries, 'BatterySoC');
 Scenario = Scenario.addElement(minBatteryPercentageRequiredTimeseries, 'MinSoC');
 Scenario = Scenario.addElement(BatteryPercentageToPoolTimeseries, 'BatteryPercentageToPool');
 
-% Save the scenario to a .mat file
-save('fauxData5.mat', 'Scenario');
+ % Save the scenario to a .mat file with a unique name for each iteration
+ filename = sprintf('fauxdata%d.mat', i);
+ save(filename, 'Scenario');
 
+end
