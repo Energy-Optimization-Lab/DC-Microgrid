@@ -12,7 +12,7 @@ function punishmentAllocation = NormalPunishment(BatteryAllocScore)
     fourStdevs = AvgBatteryAllocScore - (4*std(AvgBatteryAllocScore));
 
     % Calculating 2 standard Deviations away from the average
-    twoStdevs = AvgBatteryAllocScore - (4*std(AvgBatteryAllocScore));
+    twoStdevs = AvgBatteryAllocScore - (2*std(AvgBatteryAllocScore));
 
     for i=1:length(BatteryAllocScore)
         if BatteryAllocScore(1,i) > fourStdevs

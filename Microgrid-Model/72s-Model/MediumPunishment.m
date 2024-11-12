@@ -9,7 +9,7 @@ function punishmentAllocation = MediumPunishment(BatteryAllocScore)
     AvgBatteryAllocScore = mean(BatteryAllocScore);
     
     % Calculating 4 Standard Deviations away from the average
-    fourStdevs = AvgBatteryAllocScore - (4*std(AvgBatteryAllocScore));
+    fourStdevs = -4*std(AvgBatteryAllocScore); % Should this be BatteryAllocScore (i.e elements rather than the mean)
 
     for i=1:length(BatteryAllocScore)
         if BatteryAllocScore(1,i) > fourStdevs
